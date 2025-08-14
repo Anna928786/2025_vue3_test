@@ -7,6 +7,16 @@ export const useFavoriteStore = defineStore('favoriteStore', () => {
 
   // 任務8. 加入我的最愛
   const addFav = (target) => {
+    if (!target || !target.id) return
+
+    const isExist= list.value.some(fav =>fav.id === target.id)
+
+    if(!isExist){
+      list.value.push(target)
+    console.log(`已將 "${target.name}" 加入收藏！`);
+    }else{
+    console.log(`"${target.name}" 已經在您的收藏列表裡了。`)
+    }
     console.log(target);
   }
 

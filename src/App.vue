@@ -1,14 +1,19 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import FavList from './components/FavList.vue'
+import { watch } from 'vue';
+
 // 任務1. 引入FavList組件到App.vue的aside中
 
 // 如果使用pinia
-// import { useFavoriteStore } from '@/stores/favorites'
-// const favoriteStore = useFavoriteStore()
+import { useFavoriteStore } from '@/stores/favorites'
+const favoriteStore = useFavoriteStore()
 
 // 任務2. 顯示專輯資料
 // 目前畫面中僅呈現defaultData
 // 請將資料替換成`public/albums.json`中的專輯資料
+const albumData = ref([])
+const displayedAlbums = ref([])
 const defaultData = {
   "id": 1,
   "images": "https://i.scdn.co/image/ab67616d00001e023e59f3e73b99ed248ab7bae2",
@@ -16,21 +21,41 @@ const defaultData = {
   "artists": "Lee Young Ji"
 }
 onMounted(()=>{
-  //fetch('src/assets/albums.json')
-})
+  fetch('src/assets/albums.json')
+  .then(Response => Response.json())
+  .then(data =>{
+    albumData.value = data;
+    displayedAlbums.value = data;
+  })
+  .catch(error =>{
+    console.log('讀取專輯資料時發生錯誤:', error);
+  });
+});
 
 // 任務3:開啟關閉側拉選單(收藏列表)
 const asideToggle = ref(false)
-const toggleAside = () => {}
+const toggleAside = (
+) => {asideToggle.value = !asideToggle.value}
 
 // 任務4.專輯資料可以被input搜尋
 const search = ref('')
 
+watch(search, (newSearchValue) =>{
+  if(!newSearchValue){
+    displayedAlbums.value = albumData.value;
+    return;
+  }
+
+  displayedAlbums.value = albumData.value.filter(album => album.name.toLowerCase().includes(newSearchValue.toLowerCase())||
+album.artists.toLowerCase().includes(newSearchValue.toLowerCase())
+)
+});
+
 // 任務5.加入我的收藏
 // 不限定方式，如果不知道怎麼使用pinia可以用其他方式
-const addFav = (item) => {
-  console.log(item);
-}
+const addFav = (album) => {
+      favoriteStore.addFav(album)
+    }
 
 </script>
 
@@ -45,14 +70,14 @@ const addFav = (item) => {
   </header>
 
   <main>
-    <div class="card">
-      <img :src="defaultData.images" />
+    <div class="card" v-for="album in displayedAlbums" :key="album.id">
+      <img :src="album.images" />
       <div class="card_body">
-        <h6>{{ defaultData.name }}</h6>
-        <p>{{ defaultData.artists }}</p>
+        <h6>{{ album.name }}</h6>
+        <p>{{ album.artists }}</p>
       </div>
       <div class="card_footer">
-        <button class="favoriteBtn" @click="addFav(defaultData)">
+        <button class="favoriteBtn" @click="addFav(album)">
           <img src="~@/assets/heartBlack.png" alt="收藏專輯" />
         </button>
       </div>
@@ -60,6 +85,7 @@ const addFav = (item) => {
   </main>
 
   <aside :class="{ open: asideToggle }">
+    <fav-list/>
     <!-- 收藏清單 -->
   </aside>
 </template>
